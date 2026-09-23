@@ -33,18 +33,31 @@ Dado que Claude Desktop está basado en Electron, acepta el flag `--user-data-di
 
 ## 🚀 Instalación y Uso Rápido
 
-### Archivos Principales
+### 1. Descarga del Proyecto
+
+> [!NOTE]
+> Al ser una herramienta basada en scripts de PowerShell y Batch, **no se utilizan instaladores ejecutables externos ni sección de *Releases***. Para obtener la versión más reciente:
+
+1. En la página principal del repositorio en GitHub, haz clic en el botón verde **`<> Code`**.
+2. Selecciona la opción **`Download ZIP`** (o bien clona el repositorio con `git clone https://github.com/rx32555/ClaudeDesktop_MultiInstancia.git`).
+3. Descomprime el archivo `.zip` descargado en cualquier carpeta fija de tu equipo.
+
+---
+
+### 2. Archivos Incluidos
 
 | Archivo | Descripción |
 |---------|-------------|
 | `Setup-ClaudeMulti.ps1` | Script principal de configuración y lógica de negocio |
 | `Setup-ClaudeMulti.bat` | Lanzador directo (evita configurar manualmente la política de ejecución de PowerShell) |
 
-> Ambos archivos deben permanecer en la misma carpeta.
+> Ambos archivos deben permanecer juntos en la misma carpeta.
 
-### Modo Gráfico (Recomendado)
+---
 
-1. Haz doble clic sobre **`Setup-ClaudeMulti.bat`**.
+### 3. Modo Gráfico (Recomendado)
+
+1. Entra a la carpeta descomprimida y haz doble clic sobre **`Setup-ClaudeMulti.bat`**.
 2. Se abrirá la **Interfaz Gráfica de Usuario (GUI nativa)**:
    - **Lista de Perfiles Activos:** Muestra cada cuenta con sus notas o correos asociados.
    - **▶ Ejecutar / Actualizar Instancias:** Configura y deja listos los accesos directos.
@@ -57,7 +70,7 @@ Dado que Claude Desktop está basado en Electron, acepta el flag `--user-data-di
    - **Eliminar Perfil:** Remueve de forma limpia el perfil seleccionado preservando el resto.
    - **Ver registro:** Abre el archivo de registro de la última ejecución en el bloc de notas.
 
-### Modo Consola / Terminal
+### 4. Modo Consola / Terminal
 
 Si prefieres usar la consola o automatizar via scripts:
 
