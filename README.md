@@ -6,19 +6,19 @@ Anthropic no ofrece soporte nativo para el cambio o uso simultáneo de cuentas e
 
 ---
 
-## ⚡ Características Principales
+## Características Principales
 
-- 🪟 **Interfaz Gráfica Nativa (GUI Windows Forms):** Administra, añade, edita notas/emails y elimina perfiles con un solo clic.
-- 🎨 **Iconos Únicos por Color:** Genera automáticamente iconos `.ico` multi-resolución con insignias de colores distintos para identificar visualmente cada acceso directo en el escritorio.
-- 🔄 **Compatibilidad Total (MSIX y Exe Tradicional):** Funciona tanto con la versión de Microsoft Store (MSIX) mediante copia portable auto-gestionada en `C:\ClaudePortable` como con instaladores clásicos.
-- 🚀 **Actualizaciones Automáticas Seguras:** Verifica la versión de Claude Desktop al abrir cualquier perfil. Si la app se actualizó, prepara y valida una copia nueva sin romper perfiles activos.
-- 🧠 **Memoria Compartida MCP (Opcional):** Permite interconectar todas las cuentas a una memoria de contexto común (`memory.json`) y carpeta compartida de archivos mediante MCP.
-- 📝 **Registro de Diagnóstico (`last-run.log`):** Registra cada ejecución en `%APPDATA%\ClaudeMulti\last-run.log` para facilitar la resolución de problemas.
-- 🧪 **Suite de Pruebas Unitarias Integrada:** Incluye tests automatizados para validar lanzadores, gestión de procesos, copias portables y logs.
+- **Interfaz Gráfica Nativa (GUI Windows Forms):** Administra, añade, edita notas/emails y elimina perfiles con un solo clic.
+- **Iconos Únicos por Color:** Genera automáticamente iconos `.ico` multi-resolución con insignias de colores distintos para identificar visualmente cada acceso directo en el escritorio.
+- **Compatibilidad Total (MSIX y Exe Tradicional):** Funciona tanto con la versión de Microsoft Store (MSIX) mediante copia portable auto-gestionada en `C:\ClaudePortable` como con instaladores clásicos.
+- **Actualizaciones Automáticas Seguras:** Verifica la versión de Claude Desktop al abrir cualquier perfil. Si la app se actualizó, prepara y valida una copia nueva sin romper perfiles activos.
+- **Memoria Compartida MCP (Opcional):** Permite interconectar todas las cuentas a una memoria de contexto común (`memory.json`) y carpeta compartida de archivos mediante MCP.
+- **Registro de Diagnóstico (`last-run.log`):** Registra cada ejecución en `%APPDATA%\ClaudeMulti\last-run.log` para facilitar la resolución de problemas.
+- **Suite de Pruebas Unitarias Integrada:** Incluye tests automatizados para validar lanzadores, gestión de procesos, copias portables y logs.
 
 ---
 
-## 💡 El Problema y la Solución
+## El Problema y la Solución
 
 Claude Desktop guarda **todo** el estado del usuario —incluido el token de sesión y configuración— en una única carpeta *user data* (`%APPDATA%\Claude`). Al existir solo una carpeta predeterminada, solo una cuenta puede estar activa a la vez.
 
@@ -31,12 +31,12 @@ Dado que Claude Desktop está basado en Electron, acepta el flag `--user-data-di
 
 ---
 
-## 🚀 Instalación y Uso Rápido
+## Instalación y Uso Rápido
 
 ### 1. Descarga del Proyecto
 
 > [!NOTE]
-> Al ser una herramienta basada en scripts de PowerShell y Batch, **no se utilizan instaladores ejecutables externos ni sección de *Releases***. Para obtener la versión más reciente:
+> Al ser una herramienta basada en scripts de PowerShell y Batch, **no se utilizan instaladores compilados ni sección de Releases**. Para obtener la versión más reciente:
 
 1. En la página principal del repositorio en GitHub, haz clic en el botón verde **`<> Code`**.
 2. Selecciona la opción **`Download ZIP`** (o bien clona el repositorio con `git clone https://github.com/rx32555/ClaudeDesktop_MultiInstancia.git`).
@@ -60,8 +60,8 @@ Dado que Claude Desktop está basado en Electron, acepta el flag `--user-data-di
 1. Entra a la carpeta descomprimida y haz doble clic sobre **`Setup-ClaudeMulti.bat`**.
 2. Se abrirá la **Interfaz Gráfica de Usuario (GUI nativa)**:
    - **Lista de Perfiles Activos:** Muestra cada cuenta con sus notas o correos asociados.
-   - **▶ Ejecutar / Actualizar Instancias:** Configura y deja listos los accesos directos.
-   - **+ Añadir Perfil:** Crea una nueva cuenta (`Trabajo`, `Cliente`, `Cuenta4`, etc.) manteniendo intactas las existentes.
+   - **Ejecutar / Actualizar Instancias:** Configura y deja listos los accesos directos.
+   - **Añadir Perfil:** Crea una nueva cuenta (`Trabajo`, `Cliente`, `Cuenta4`, etc.) manteniendo intactas las existentes.
    - **Editar Nota/Email:** Asigna etiquetas descriptivas (ej. `personal@gmail.com`, `empresa@trabajo.com`).
    - **Memoria compartida (casilla):** Configura servidores MCP comunes para compartir contexto entre instancias.
    - **Health Check:** Diagnostica ejecutables, accesos directos, tamaño en disco de perfiles y detecta perfiles huérfanos.
@@ -69,6 +69,8 @@ Dado que Claude Desktop está basado en Electron, acepta el flag `--user-data-di
    - **Crear / Restaurar Backup:** Genera un respaldo `.zip` con sesiones y configuración (omitiendo cachés pesadas).
    - **Eliminar Perfil:** Remueve de forma limpia el perfil seleccionado preservando el resto.
    - **Ver registro:** Abre el archivo de registro de la última ejecución en el bloc de notas.
+
+---
 
 ### 4. Modo Consola / Terminal
 
@@ -90,7 +92,7 @@ powershell -ExecutionPolicy Bypass -File .\Setup-ClaudeMulti.ps1 -Profiles 'Pers
 
 ---
 
-## ⚙️ ¿Cómo Funciona Internamente?
+## Cómo Funciona Internamente
 
 | Etapa | Descripción |
 |---|---|
@@ -104,7 +106,7 @@ powershell -ExecutionPolicy Bypass -File .\Setup-ClaudeMulti.ps1 -Profiles 'Pers
 
 ---
 
-## 🎨 Iconos Diferenciados por Color
+## Iconos Diferenciados por Color
 
 Cada perfil recibe su propio icono en `%APPDATA%\ClaudeMulti\icons\`:
 
@@ -116,7 +118,7 @@ Cada perfil recibe su propio icono en `%APPDATA%\ClaudeMulti\icons\`:
 
 ---
 
-## 🛠️ Referencia Completa de Parámetros
+## Referencia Completa de Parámetros
 
 | Parámetro | Por defecto | Descripción |
 |-----------|-------------|-------------|
@@ -138,7 +140,7 @@ Cada perfil recibe su propio icono en `%APPDATA%\ClaudeMulti\icons\`:
 
 ---
 
-## 🧠 Memoria Compartida (`-SharedMemory`)
+## Memoria Compartida (`-SharedMemory`)
 
 Permite que distintas cuentas de Claude compartan contexto mediante MCP servers locales:
 
@@ -149,7 +151,7 @@ Permite que distintas cuentas de Claude compartan contexto mediante MCP servers 
 
 ---
 
-## 🧪 Pruebas Automatizadas
+## Pruebas Automatizadas
 
 El proyecto incluye una suite de pruebas para verificar la estabilidad de los componentes:
 
@@ -164,7 +166,7 @@ powershell.exe -NoProfile -STA -File .\tests\GuiScope.Tests.ps1
 
 ---
 
-## 📋 Requisitos del Sistema
+## Requisitos del Sistema
 
 - **Sistema Operativo:** Windows 10 o Windows 11.
 - **PowerShell:** Windows PowerShell 5.1 (el que viene preinstalado en Windows).
@@ -174,6 +176,6 @@ powershell.exe -NoProfile -STA -File .\tests\GuiScope.Tests.ps1
 
 ---
 
-## 📄 Licencia
+## Licencia
 
 Este proyecto está bajo la Licencia MIT. Consulta el archivo [LICENSE](./LICENSE) para más detalles.
