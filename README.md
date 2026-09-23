@@ -1,181 +1,202 @@
-# Claude Desktop - Multi-Instancia (`Setup-ClaudeMulti`)
-
-Script de automatización en PowerShell para ejecutar **múltiples instancias simultáneas de Claude Desktop en paralelo** en Windows, cada una con su propia cuenta, sesión, historial local, servidores MCP y configuración independiente.
-
-Anthropic no ofrece soporte nativo para el cambio o uso simultáneo de cuentas en Claude Desktop: obliga a cerrar sesión y autenticarse nuevamente cada vez. Este proyecto elimina esa restricción de forma transparente y segura.
+**[English](README.md)** | **[Español](README.es.md)**
 
 ---
 
-## Características Principales
+# Claude Desktop - Multi-Instance (`Setup-ClaudeMulti`)
 
-- **Interfaz Gráfica Nativa (GUI Windows Forms):** Administra, añade, edita notas/emails y elimina perfiles con un solo clic.
-- **Iconos Únicos por Color:** Genera automáticamente iconos `.ico` multi-resolución con insignias de colores distintos para identificar visualmente cada acceso directo en el escritorio.
-- **Compatibilidad Total (MSIX y Exe Tradicional):** Funciona tanto con la versión de Microsoft Store (MSIX) mediante copia portable auto-gestionada en `C:\ClaudePortable` como con instaladores clásicos.
-- **Actualizaciones Automáticas Seguras:** Verifica la versión de Claude Desktop al abrir cualquier perfil. Si la app se actualizó, prepara y valida una copia nueva sin romper perfiles activos.
-- **Memoria Compartida MCP (Opcional):** Permite interconectar todas las cuentas a una memoria de contexto común (`memory.json`) y carpeta compartida de archivos mediante MCP.
-- **Registro de Diagnóstico (`last-run.log`):** Registra cada ejecución en `%APPDATA%\ClaudeMulti\last-run.log` para facilitar la resolución de problemas.
-- **Suite de Pruebas Unitarias Integrada:** Incluye tests automatizados para validar lanzadores, gestión de procesos, copias portables y logs.
+A PowerShell automation suite to run **multiple simultaneous, isolated instances of Claude Desktop in parallel** on Windows, each with its own account, session, local history, MCP servers, and independent configuration.
+
+Anthropic does not natively support account switching or concurrent accounts in Claude Desktop: you are forced to log out and authenticate again every time. This project removes that restriction seamlessly and securely.
 
 ---
 
-## El Problema y la Solución
+## Key Features
 
-Claude Desktop guarda **todo** el estado del usuario —incluido el token de sesión y configuración— en una única carpeta *user data* (`%APPDATA%\Claude`). Al existir solo una carpeta predeterminada, solo una cuenta puede estar activa a la vez.
+- **Automatic Language Detection & Localization (English / Spanish):** Automatically detects your Windows OS display language (Spanish Windows $\rightarrow$ Spanish; any other language $\rightarrow$ English). Also supports manual language selection and forcing at any time.
+- **Native Graphical User Interface (Windows Forms GUI):** Manage, add, edit notes/emails, and remove profiles with a single click. Includes real-time language switching.
+- **Unique Per-Profile Color Icons:** Generates multi-resolution `.ico` files with color-coded badges to easily distinguish desktop shortcuts.
+- **Full Compatibility (Store MSIX and Traditional Exe):** Works with Microsoft Store (MSIX) packages via a self-managed portable copy in `C:\ClaudePortable`, as well as standard direct executables.
+- **Safe Automatic Updates:** Verifies the installed Claude Desktop version when opening any profile. When updated, it stages and validates a new copy without disrupting active profiles.
+- **Shared Memory MCP (Optional):** Interconnects accounts to a shared context graph (`memory.json`) and common files directory using MCP servers.
+- **Diagnostic Run Log (`last-run.log`):** Logs every run to `%APPDATA%\ClaudeMulti\last-run.log` for easy troubleshooting.
+- **Integrated Test Suite:** Automated Pester tests to validate launchers, process management, portable staging, and log formatting.
+
+---
+
+## The Problem and The Solution
+
+Claude Desktop stores **all** user state — including session tokens, preferences, and MCP settings — in a single user data folder (`%APPDATA%\Claude`). With only one default directory, only one account can be active at a time.
 
 ```
-ANTES    →  Cerrar sesión → login cuenta B → trabajar → cerrar sesión → login cuenta A...
-DESPUÉS  →  Múltiples ventanas abiertas al mismo tiempo, una por cuenta.
+BEFORE  →  Log out → log in with account B → work → log out → log in with account A...
+AFTER   →  Multiple windows open simultaneously, one per account.
 ```
 
-Dado que Claude Desktop está basado en Electron, acepta el flag `--user-data-dir`. Al invocar el ejecutable asignando rutas independientes (`%APPDATA%\Claude-<Nombre>`), cada ventana trabaja en un entorno completamente aislado.
+Because Claude Desktop is an Electron application, it accepts the `--user-data-dir` parameter. By starting the executable with isolated paths (`%APPDATA%\Claude-<Name>`), each window runs in a completely separate environment.
 
 ---
 
-## Instalación y Uso Rápido
+## Language Detection and Manual Override
 
-### 1. Descarga del Proyecto
+This project provides full bilingual support in **English** and **Spanish**:
+
+1. **Automatic Detection:**
+   - If Windows is set to Spanish (`es-*`), the setup, GUI, CLI menu, and shortcuts launch in **Spanish**.
+   - If Windows is in any other language (`en`, `fr`, `de`, `pt`, `ja`, etc.), it launches in **English**.
+
+2. **Manual Override:**
+   - **Graphical Interface (GUI):** Use the language dropdown in the top-right corner (`Español` / `English`). The interface updates instantly and persists your choice.
+   - **Console Menu (CLI):** Select option `[13] Change language / Cambiar idioma`.
+   - **Command Line:** Pass the `-Language en` or `-Language es` switch.
+   - **Persistence:** Any manual selection is stored in `%APPDATA%\ClaudeMulti\config.json`, keeping your choice across future runs.
+
+---
+
+## Installation & Quick Start
+
+### 1. Download the Project
 
 > [!NOTE]
-> Al ser una herramienta basada en scripts de PowerShell y Batch, **no se utilizan instaladores compilados ni sección de Releases**. Para obtener la versión más reciente:
+> As a PowerShell and Batch automation project, **compiled installers or GitHub Releases are not used**. To obtain the latest version:
 
-1. En la página principal del repositorio en GitHub, haz clic en el botón verde **`<> Code`**.
-2. Selecciona la opción **`Download ZIP`** (o bien clona el repositorio con `git clone https://github.com/rx32555/ClaudeDesktop_MultiInstancia.git`).
-3. Descomprime el archivo `.zip` descargado en cualquier carpeta fija de tu equipo.
-
----
-
-### 2. Archivos Incluidos
-
-| Archivo | Descripción |
-|---------|-------------|
-| `Setup-ClaudeMulti.ps1` | Script principal de configuración y lógica de negocio |
-| `Setup-ClaudeMulti.bat` | Lanzador directo (evita configurar manualmente la política de ejecución de PowerShell) |
-
-> Ambos archivos deben permanecer juntos en la misma carpeta.
+1. On the GitHub repository main page, click the green **`<> Code`** button.
+2. Select **`Download ZIP`** (or clone with `git clone https://github.com/rx32555/ClaudeDesktop_MultiInstancia.git`).
+3. Extract the `.zip` archive into a permanent folder on your computer.
 
 ---
 
-### 3. Modo Gráfico (Recomendado)
+### 2. Included Files
 
-1. Entra a la carpeta descomprimida y haz doble clic sobre **`Setup-ClaudeMulti.bat`**.
-2. Se abrirá la **Interfaz Gráfica de Usuario (GUI nativa)**:
-   - **Lista de Perfiles Activos:** Muestra cada cuenta con sus notas o correos asociados.
-   - **Ejecutar / Actualizar Instancias:** Configura y deja listos los accesos directos.
-   - **Añadir Perfil:** Crea una nueva cuenta (`Trabajo`, `Cliente`, `Cuenta4`, etc.) manteniendo intactas las existentes.
-   - **Editar Nota/Email:** Asigna etiquetas descriptivas (ej. `personal@gmail.com`, `empresa@trabajo.com`).
-   - **Memoria compartida (casilla):** Configura servidores MCP comunes para compartir contexto entre instancias.
-   - **Health Check:** Diagnostica ejecutables, accesos directos, tamaño en disco de perfiles y detecta perfiles huérfanos.
-   - **Limpiar Caché:** Libera espacio purgando cachés temporales y versiones obsoletas de binarios.
-   - **Crear / Restaurar Backup:** Genera un respaldo `.zip` con sesiones y configuración (omitiendo cachés pesadas).
-   - **Eliminar Perfil:** Remueve de forma limpia el perfil seleccionado preservando el resto.
-   - **Ver registro:** Abre el archivo de registro de la última ejecución en el bloc de notas.
+| File | Description |
+|------|-------------|
+| `Setup-ClaudeMulti.ps1` | Core business logic, GUI, interactive CLI, and profile configuration |
+| `Setup-ClaudeMulti.bat` | Direct launcher with environment language detection (bypasses execution policy) |
+
+> Both files must stay in the same folder.
 
 ---
 
-### 4. Modo Consola / Terminal
+### 3. Graphical Mode (Recommended)
 
-Si prefieres usar la consola o automatizar via scripts:
+1. Open the extracted folder and double-click **`Setup-ClaudeMulti.bat`**.
+2. The **native Windows Forms GUI** will open:
+   - **Language Dropdown:** Located at the top right to switch between English and Spanish.
+   - **Configured Profiles List:** Displays each profile along with its assigned note or email.
+   - **Run / Update Instances:** Sets up or refreshes your desktop shortcuts.
+   - **+ Add Profile:** Creates a new instance (`Work`, `Client`, `Personal`, etc.) while keeping existing profiles intact.
+   - **Edit Note/Email:** Adds helpful labels (e.g. `work@company.com`, `personal@gmail.com`).
+   - **Shared Memory (checkbox):** Configures common MCP servers for cross-instance context.
+   - **Health Check:** Validates executables, desktop shortcuts, disk space usage, and detects orphan profile folders.
+   - **Clean Cache:** Frees disk space by purging temporary caches and obsolete binary versions.
+   - **Create / Restore Backup:** Backs up all account sessions and settings to a `.zip` archive (skipping heavy cache folders).
+   - **Delete Profile:** Cleanly deletes the selected profile, its data, icon, and desktop shortcut.
+   - **View Log:** Opens `last-run.log` in Notepad.
+
+---
+
+### 4. Command Line / Terminal Mode
+
+If you prefer terminal commands or scripting:
 
 ```powershell
-# Ejecutar en modo CLI interactivo
+# Open interactive CLI menu
 powershell -ExecutionPolicy Bypass -File .\Setup-ClaudeMulti.ps1 -CLI
 
-# Crear perfiles con nombres específicos y heredar los MCPs configurados
-powershell -ExecutionPolicy Bypass -File .\Setup-ClaudeMulti.ps1 -Profiles 'Personal','Trabajo','Cliente' -CopyMcpConfig
+# Force English or Spanish language
+powershell -ExecutionPolicy Bypass -File .\Setup-ClaudeMulti.ps1 -Language en
+powershell -ExecutionPolicy Bypass -File .\Setup-ClaudeMulti.ps1 -Language es
 
-# Crear perfiles con memoria compartida
-powershell -ExecutionPolicy Bypass -File .\Setup-ClaudeMulti.ps1 -Profiles 'Personal','Trabajo','Cliente' -SharedMemory
+# Configure specific profiles and copy MCP servers from default profile
+powershell -ExecutionPolicy Bypass -File .\Setup-ClaudeMulti.ps1 -Profiles 'Personal','Work','Client' -CopyMcpConfig
 
-# Simular las acciones sin modificar el sistema (Dry Run)
-powershell -ExecutionPolicy Bypass -File .\Setup-ClaudeMulti.ps1 -Profiles 'Personal','Trabajo' -WhatIf
+# Enable shared memory across instances
+powershell -ExecutionPolicy Bypass -File .\Setup-ClaudeMulti.ps1 -Profiles 'Personal','Work','Client' -SharedMemory
+
+# Dry run (simulate changes without modifying disk)
+powershell -ExecutionPolicy Bypass -File .\Setup-ClaudeMulti.ps1 -Profiles 'Personal','Work' -WhatIf
 ```
 
 ---
 
-## Cómo Funciona Internamente
+## How It Works Internally
 
-| Etapa | Descripción |
+| Stage | Description |
 |---|---|
-| **1. Detección** | Localiza la instalación de Claude Desktop (`.exe` tradicional o paquete MSIX de Microsoft Store) y obtiene la versión activa. |
-| **2. Copia portable** | *(Solo MSIX)* Copia la aplicación a `C:\ClaudePortable`. Si Claude se actualiza en Microsoft Store, refresca la copia manteniendo el respaldo funcional hasta validar la nueva versión. |
-| **3. Iconos** | Genera un icono `.ico` multi-resolución (256, 128, 64, 48, 32, 16 px) con la insignia del color asignado para cada perfil. |
-| **4. Lanzador** | Instala un lanzador inteligente en `%APPDATA%\ClaudeMulti` que comprueba versiones y valida procesos antes de ejecutar Claude. |
-| **5. Accesos Directos** | Crea un archivo `.lnk` en el Escritorio por cada perfil configurado con su respectivo `--user-data-dir`. |
+| **1. Detection** | Finds the Claude Desktop installation (standard `.exe` or Microsoft Store MSIX package) and reads the active version. |
+| **2. Portable Copy** | *(Store MSIX only)* Copies the app to `C:\ClaudePortable`. When Claude updates in the Microsoft Store, it stages a replacement copy without breaking running sessions. |
+| **3. Icons** | Generates a multi-resolution `.ico` icon (256, 128, 64, 48, 32, 16 px) with a distinctive colored badge for each profile. |
+| **4. Launcher** | Installs a launcher in `%APPDATA%\ClaudeMulti` that validates versions and processes before launching Claude. |
+| **5. Shortcuts** | Creates desktop shortcuts (`.lnk`) configured with `--user-data-dir` for each profile. |
 
-> **Nota sobre el primer perfil:** El primer perfil siempre apunta a la carpeta predeterminada (`%APPDATA%\Claude`), conservando tu sesión, historial y configuración previa intactos. Los perfiles adicionales usan `%APPDATA%\Claude-<Nombre>`.
+> **Note regarding the first profile:** The first profile always uses the default user data directory (`%APPDATA%\Claude`), preserving your existing session, history, and MCP settings. Additional profiles use `%APPDATA%\Claude-<Name>`.
 
 ---
 
-## Iconos Diferenciados por Color
+## Color-Coded Profile Icons
 
-Cada perfil recibe su propio icono en `%APPDATA%\ClaudeMulti\icons\`:
+Each profile is assigned a unique color icon in `%APPDATA%\ClaudeMulti\icons\`:
 
-| Orden | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+| Order | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
 |---|---|---|---|---|---|---|---|
-| **Color** | Azul | Verde | Morado | Cian | Rosa | Azabache | Oliva |
+| **Color** | Blue | Green | Purple | Cyan | Pink | Jet Black | Olive |
 
-> Los colores evitan intencionalmente el naranja/coral para que la insignia circular resalte con nitidez sobre el logo oficial de Claude.
-
----
-
-## Referencia Completa de Parámetros
-
-| Parámetro | Por defecto | Descripción |
-|-----------|-------------|-------------|
-| `-Profiles` | `'Cuenta1','Cuenta2','Cuenta3'` | Lista de nombres de perfiles a configurar. |
-| `-GUI` | — | Abre la interfaz gráfica nativa en Windows Forms. |
-| `-CLI` | — | Fuerza la ejecución en modo consola interactiva de texto. |
-| `-Language` | Auto (`es`/`en`) | Idioma de interfaz, diálogos y accesos directos. |
-| `-PortableDir` | `C:\ClaudePortable` | Carpeta de destino para la copia portable (solo MSIX). |
-| `-CopyMcpConfig` | — | Copia los servidores MCP (`mcpServers`) del perfil principal a los nuevos perfiles sin sobreescribir los existentes. |
-| `-SharedMemory` | — | Añade servidores MCP (`shared-memory` y `shared-files`) a todos los perfiles apuntando a un directorio común. *(Requiere Node.js)* |
-| `-SharedDir` | `%APPDATA%\ClaudeShared` | Carpeta de almacenamiento para la memoria compartida. |
-| `-NoLauncher` | — | Crea accesos directos apuntando directo al ejecutable (sin comprobación previa de versión). |
-| `-RemoveProfile` | — | Elimina un perfil específico manteniendo los demás intactos. |
-| `-KeepData` | — | Al usar `-RemoveProfile`, conserva la carpeta de datos del perfil eliminado (queda como huérfano para reasociación futura). |
-| `-Revert` | — | Desinstala todo: accesos directos, perfiles extra, lanzador y copia portable. |
-| `-GrantWindowsAppsRead` | — | Permite permisos de lectura sobre `WindowsApps` de forma desatendida sin confirmación interactiva. |
-| `-Force` | — | Fuerza recopia de la versión portable, sobreescritura de servidores MCP sembrados y omite advertencias de confirmación. |
-| `-WhatIf` / `-Confirm` | — | Soporte estándar de PowerShell para simulación de cambios. |
+> The colors intentionally avoid orange/coral so that the badge contrasts sharply with Claude's official logo.
 
 ---
 
-## Memoria Compartida (`-SharedMemory`)
+## Parameter Reference
 
-Permite que distintas cuentas de Claude compartan contexto mediante MCP servers locales:
-
-1. **`shared-memory`:** Grafo de conocimiento persistido en `<SharedDir>\memory.json`. Lo que anota una cuenta, lo leen las demás.
-2. **`shared-files`:** Directorio común de lectura y escritura para compartir documentos `.md` y archivos de trabajo entre instancias.
-
-> **Requisito:** Requiere **Node.js** instalado y accesible desde el `PATH` para la ejecución de herramientas vía `npx`.
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `-Profiles` | `'Cuenta1','Cuenta2','Cuenta3'` | List of profile names to configure. |
+| `-GUI` | — | Opens the native Windows Forms interface. |
+| `-CLI` | — | Forces interactive text console mode. |
+| `-Language` | Auto (`en`/`es`) | Overrides interface and shortcut language (`en` or `es`). |
+| `-PortableDir` | `C:\ClaudePortable` | Target folder for the portable copy (MSIX only). |
+| `-CopyMcpConfig` | — | Copies MCP servers from the primary profile to new profiles without overwriting. |
+| `-SharedMemory` | — | Sets up MCP servers (`shared-memory` and `shared-files`) pointing to a shared directory across all profiles. *(Requires Node.js)* |
+| `-SharedDir` | `%APPDATA%\ClaudeShared` | Directory for shared memory storage. |
+| `-NoLauncher` | — | Direct desktop shortcuts without version checking. |
+| `-RemoveProfile` | — | Removes specific profiles while leaving the others untouched. |
+| `-KeepData` | — | When removing a profile, preserves its user data folder as orphan for future re-adoption. |
+| `-Revert` | — | Full uninstall: deletes desktop shortcuts, extra profiles, launcher, and portable copy. |
+| `-GrantWindowsAppsRead` | — | Grants read access to `WindowsApps` unattended when required. |
+| `-Force` | — | Forces portable recopy, overwrites shared MCP servers, and skips confirmation prompts. |
+| `-WhatIf` / `-Confirm` | — | Standard PowerShell support for change simulation. |
 
 ---
 
-## Pruebas Automatizadas
+## Shared Memory (`-SharedMemory`)
 
-El proyecto incluye una suite de pruebas para verificar la estabilidad de los componentes:
+Allows multiple Claude accounts to share context via local MCP servers:
+
+1. **`shared-memory`:** Knowledge graph persisted in `<SharedDir>\memory.json`. Context saved by one account can be queried by the others.
+2. **`shared-files`:** Shared read/write folder for `.md` notes and working files across instances.
+
+> **Requirement:** Requires **Node.js** installed and available on `PATH` to run tools via `npx`.
+
+---
+
+## Automated Tests
+
+The repository includes a comprehensive Pester test suite to verify component stability:
 
 ```powershell
-powershell.exe -NoProfile -File .\tests\Launcher.Tests.ps1
-powershell.exe -NoProfile -File .\tests\PortableCopy.Tests.ps1
-powershell.exe -NoProfile -File .\tests\PortableProcess.Tests.ps1
-powershell.exe -NoProfile -File .\tests\RunLog.Tests.ps1
-powershell.exe -NoProfile -STA -File .\tests\GuiBackground.Tests.ps1
-powershell.exe -NoProfile -STA -File .\tests\GuiScope.Tests.ps1
+powershell.exe -ExecutionPolicy Bypass -Command "Invoke-Pester -Path .\tests"
 ```
 
 ---
 
-## Requisitos del Sistema
+## System Requirements
 
-- **Sistema Operativo:** Windows 10 o Windows 11.
-- **PowerShell:** Windows PowerShell 5.1 (el que viene preinstalado en Windows).
-  - *Nota:* PowerShell 7 no incluye soporte completo para cmdlets de paquetes Appx/MSIX (`Get-AppxPackage`). El archivo `.bat` asegura automáticamente la ejecución con PowerShell 5.1.
-- **Claude Desktop:** Instalado previamente en el equipo.
-- **Node.js:** Opcional (únicamente requerido si se utiliza `-SharedMemory`).
+- **Operating System:** Windows 10 or Windows 11.
+- **PowerShell:** Windows PowerShell 5.1 (bundled with Windows).
+  - *Note:* PowerShell 7 does not fully support Appx/MSIX management cmdlets (`Get-AppxPackage`). The `.bat` launcher automatically ensures PowerShell 5.1 is used.
+- **Claude Desktop:** Installed on the system.
+- **Node.js:** Optional (only needed if using `-SharedMemory`).
 
 ---
 
-## Licencia
+## License
 
-Este proyecto está bajo la Licencia MIT. Consulta el archivo [LICENSE](./LICENSE) para más detalles.
+This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.

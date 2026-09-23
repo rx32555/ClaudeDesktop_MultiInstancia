@@ -1,32 +1,49 @@
 @echo off
 setlocal
-title Claude Desktop - Multi Instancia
+rem ---------------------------------------------------------------------
+rem  Lanzador / Launcher: Setup-ClaudeMulti.ps1
+rem  Detecta idioma del sistema o configuracion guardada (es / en).
+rem ---------------------------------------------------------------------
 
-rem ---------------------------------------------------------------------
-rem  Lanzador de Setup-ClaudeMulti.ps1
-rem  Ejecuta el script de PowerShell que esta en esta misma carpeta.
-rem
-rem  Se puede ejecutar cuantas veces se quiera: en cada arranque comprueba
-rem  si Claude Desktop se actualizo y, si es asi, refresca la copia
-rem  portable sola. Si ya esta al dia, termina en un segundo sin copiar.
-rem
-rem  Normalmente NO hace falta Administrador. Solo si la copia falla por
-rem  los permisos de WindowsApps el script lo pedira explicitamente.
-rem ---------------------------------------------------------------------
+set "SYS_LANG=en"
+for /f "tokens=3" %%a in ('reg query "HKCU\Control Panel\International" /v LocaleName 2^>nul') do (
+    echo %%a | findstr /i "^es" >nul && set "SYS_LANG=es"
+)
+if exist "%APPDATA%\ClaudeMulti\config.json" (
+    findstr /i "\"language\": *\"es\"" "%APPDATA%\ClaudeMulti\config.json" >nul 2>&1 && set "SYS_LANG=es"
+    findstr /i "\"language\": *\"en\"" "%APPDATA%\ClaudeMulti\config.json" >nul 2>&1 && set "SYS_LANG=en"
+)
+echo %* | findstr /i "\-Language *es" >nul && set "SYS_LANG=es"
+echo %* | findstr /i "\-Language *en" >nul && set "SYS_LANG=en"
+
+if "%SYS_LANG%"=="es" (
+    title Claude Desktop - Multi Instancia
+) else (
+    title Claude Desktop - Multi-Instance
+)
 
 set "PS1=%~dp0Setup-ClaudeMulti.ps1"
 
 if not exist "%PS1%" (
     echo.
-    echo  [X] No se encontro Setup-ClaudeMulti.ps1 junto a este archivo.
-    echo      Deja los dos archivos en la misma carpeta y vuelve a intentar.
+    if "%SYS_LANG%"=="es" (
+        echo  [X] No se encontro Setup-ClaudeMulti.ps1 junto a este archivo.
+        echo      Deja los dos archivos en la misma carpeta y vuelve a intentar.
+    ) else (
+        echo  [X] Could not find Setup-ClaudeMulti.ps1 next to this file.
+        echo      Please keep both files in the same folder and try again.
+    )
     echo.
     pause
     exit /b 1
 )
 
 echo.
-echo  Configurando / comprobando actualizaciones de Claude...
+if "%SYS_LANG%"=="es" (
+    echo  Configurando / comprobando actualizaciones de Claude...
+) else (
+    echo  Configuring / checking for Claude updates...
+)
 echo.
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%PS1%" %*
@@ -34,7 +51,11 @@ set "SETUP_EXIT=%ERRORLEVEL%"
 
 if errorlevel 1 (
     echo.
-    echo  [X] Termino con errores. Revisa los mensajes de arriba.
+    if "%SYS_LANG%"=="es" (
+        echo  [X] Termino con errores. Revisa los mensajes de arriba.
+    ) else (
+        echo  [X] Finished with errors. Check the messages above.
+    )
 )
 
 echo.

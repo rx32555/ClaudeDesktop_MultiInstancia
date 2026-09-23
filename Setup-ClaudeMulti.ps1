@@ -98,17 +98,32 @@ param(
 $ErrorActionPreference = 'Stop'
 
 # --- Idioma e Internacionalizacion (i18n) -------------------------------------
+$script:HomeDir = Join-Path $env:APPDATA 'ClaudeMulti'
 $script:Lang = 'en'
 if (-not [string]::IsNullOrWhiteSpace($Language)) {
     if ($Language -match '^es') { $script:Lang = 'es' }
     else { $script:Lang = 'en' }
 }
 else {
-    try {
-        $uiCulture = [System.Globalization.CultureInfo]::CurrentUICulture.TwoLetterISOLanguageName
-        if ($uiCulture -eq 'es') { $script:Lang = 'es' }
-    } catch {
-        $script:Lang = 'en'
+    $savedLang = $null
+    $cfgFile = Join-Path $script:HomeDir 'config.json'
+    if (Test-Path -LiteralPath $cfgFile) {
+        try {
+            $savedJson = Get-Content -LiteralPath $cfgFile -Raw | ConvertFrom-Json
+            if ($savedJson.language) { $savedLang = [string]$savedJson.language }
+        } catch { }
+    }
+    if ($savedLang) {
+        if ($savedLang -match '^es') { $script:Lang = 'es' }
+        else { $script:Lang = 'en' }
+    }
+    else {
+        try {
+            $uiCulture = [System.Globalization.CultureInfo]::CurrentUICulture.TwoLetterISOLanguageName
+            if ($uiCulture -eq 'es') { $script:Lang = 'es' }
+        } catch {
+            $script:Lang = 'en'
+        }
     }
 }
 
@@ -141,7 +156,7 @@ $script:I18n = @{
         MenuOpt9                  = '[9] Alternar copia de MCPs a nuevos perfiles'
         MenuOpt10                 = '[10] Alternar memoria compartida entre instancias (MCP)'
         MenuOpt0                  = '[0] Salir'
-        SelectOpt                 = 'Selecciona una opcion (0-12)'
+        SelectOpt                 = 'Selecciona una opcion (0-13)'
         EnterTotalNum             = 'Ingresa el numero total de instancias deseado (ej: 4)'
         InvalidNum                = 'Numero no valido.'
         EnterNewName              = 'Ingresa el nombre del nuevo perfil o instancia (ej: Cuenta4 o Trabajo)'
@@ -383,6 +398,11 @@ $script:I18n = @{
         GuiRemovePick             = 'Selecciona en la lista el perfil que quieres eliminar.'
         GuiRemoving               = '==> Eliminando el perfil ''{0}''...'
         GuiRemoveConfirm          = 'Eliminar el perfil ''{0}''?`n`nSe borran su acceso directo, su icono y su carpeta de datos (sesion, MCPs e historial).`n`nLos demas perfiles no se tocan.'
+        GuiLblLanguage            = 'Idioma:'
+        GuiLangChanged            = 'Idioma cambiado a {0}.'
+        MenuOptLanguage           = '[13] Cambiar idioma / Change language (Actual: {0})'
+        AskLanguagePrompt         = 'Selecciona el idioma (1: Espanol, 2: English)'
+        ErrNoSetupScript          = 'No se pudo localizar Setup-ClaudeMulti.ps1.'
     }
     en = @{
         HeaderTitle               = 'Claude Desktop - Multi-Instance Setup'
@@ -412,7 +432,7 @@ $script:I18n = @{
         MenuOpt9                  = '[9] Toggle copying MCPs to new profiles'
         MenuOpt10                 = '[10] Toggle shared memory across instances (MCP)'
         MenuOpt0                  = '[0] Exit'
-        SelectOpt                 = 'Select an option (0-12)'
+        SelectOpt                 = 'Select an option (0-13)'
         EnterTotalNum             = 'Enter the desired total number of instances (e.g. 4)'
         InvalidNum                = 'Invalid number.'
         EnterNewName              = 'Enter the name of the new profile or instance (e.g. Cuenta4 or Work)'
@@ -654,6 +674,11 @@ $script:I18n = @{
         GuiRemovePick             = 'Select the profile you want to delete from the list.'
         GuiRemoving               = '==> Deleting profile ''{0}''...'
         GuiRemoveConfirm          = 'Delete profile ''{0}''?`n`nIts shortcut, its icon and its data folder (session, MCPs and history) will be deleted.`n`nThe other profiles are not touched.'
+        GuiLblLanguage            = 'Language:'
+        GuiLangChanged            = 'Language changed to {0}.'
+        MenuOptLanguage           = '[13] Change language / Cambiar idioma (Current: {0})'
+        AskLanguagePrompt         = 'Select language (1: Spanish, 2: English)'
+        ErrNoSetupScript          = 'Could not locate Setup-ClaudeMulti.ps1.'
     }
 }
 function Get-I18nStr {
@@ -673,6 +698,28 @@ function Get-I18nStr {
         return [string]($str -f $FormatArgs)
     }
     return [string]$str
+}
+
+function Set-AppLanguage {
+    param([Parameter(Mandatory)][ValidateSet('es', 'en')][string]$NewLang)
+    $script:Lang = $NewLang
+    try {
+        if (-not (Test-Path -LiteralPath $script:HomeDir)) {
+            [void][IO.Directory]::CreateDirectory($script:HomeDir)
+        }
+        $cfgFile = Join-Path $script:HomeDir 'config.json'
+        $cfgObj = $null
+        if (Test-Path -LiteralPath $cfgFile) {
+            try { $cfgObj = Get-Content -LiteralPath $cfgFile -Raw | ConvertFrom-Json } catch { }
+        }
+        if (-not $cfgObj) {
+            $cfgObj = [pscustomobject]@{ language = $NewLang }
+        } else {
+            $cfgObj | Add-Member -MemberType NoteProperty -Name 'language' -Value $NewLang -Force
+        }
+        $json = $cfgObj | ConvertTo-Json -Depth 8
+        [IO.File]::WriteAllText($cfgFile, $json, (New-Object Text.UTF8Encoding($false)))
+    } catch { }
 }
 
 # ---------------------------------------------------------------- helpers ---
@@ -1519,7 +1566,7 @@ function Initialize-SharedMemory {
 # comprueba si Claude se actualizo y, si hace falta, refresca la copia portable.
 
 $script:LauncherPs1 = @'
-# Lanzador de un perfil de Claude Desktop.
+# Lanzador de un perfil de Claude Desktop / Claude Desktop Profile Launcher.
 # Comprueba si hay una version nueva de Claude antes de abrir la ventana.
 # Lo genera Setup-ClaudeMulti.ps1: no lo edites a mano, se sobrescribe.
 param([Parameter(Mandatory)][string]$ProfileName)
@@ -1528,24 +1575,38 @@ $ErrorActionPreference = 'Stop'
 $base    = Split-Path -Parent $MyInvocation.MyCommand.Path
 $cfgFile = Join-Path $base 'config.json'
 
+$lang = 'en'
+try {
+    $uiCulture = [System.Globalization.CultureInfo]::CurrentUICulture.TwoLetterISOLanguageName
+    if ($uiCulture -eq 'es') { $lang = 'es' }
+} catch { }
+
 function Show-Error {
-    param([string]$Message)
+    param([string]$Message, [string]$MessageEn = '')
+    $title = if ($lang -eq 'es') { 'Claude Multi Instancia' } else { 'Claude Multi-Instance' }
+    $disp = if ($lang -eq 'es' -or -not $MessageEn) { $Message } else { $MessageEn }
     try {
         Add-Type -AssemblyName System.Windows.Forms
-        [void][System.Windows.Forms.MessageBox]::Show($Message, 'Claude Multi Instancia',
+        [void][System.Windows.Forms.MessageBox]::Show($disp, $title,
             [System.Windows.Forms.MessageBoxButtons]::OK,
             [System.Windows.Forms.MessageBoxIcon]::Error)
-    } catch { Write-Host $Message }
+    } catch { Write-Host $disp }
     exit 1
 }
 
 if (-not (Test-Path -LiteralPath $cfgFile)) {
-    Show-Error "No se encontro config.json en $base.`n`nVuelve a ejecutar Setup-ClaudeMulti.bat."
+    Show-Error "No se encontro config.json en $base.`n`nVuelve a ejecutar Setup-ClaudeMulti.bat." `
+               "Could not find config.json in $base.`n`nPlease run Setup-ClaudeMulti.bat again."
 }
 $cfg = Get-Content -LiteralPath $cfgFile -Raw | ConvertFrom-Json
+if ($cfg.language) {
+    if ($cfg.language -match '^es') { $lang = 'es' }
+    else { $lang = 'en' }
+}
 $prof = $cfg.profiles | Where-Object { $_.name -eq $ProfileName } | Select-Object -First 1
 if (-not $prof) {
-    Show-Error "El perfil '$ProfileName' ya no esta configurado.`n`nVuelve a ejecutar Setup-ClaudeMulti.bat."
+    Show-Error "El perfil '$ProfileName' ya no esta configurado.`n`nVuelve a ejecutar Setup-ClaudeMulti.bat." `
+               "Profile '$ProfileName' is no longer configured.`n`nPlease run Setup-ClaudeMulti.bat again."
 }
 
 # Perfil por defecto sobre el paquete de la Store: Windows lo actualiza solo.
@@ -1636,6 +1697,7 @@ if ($update) {
             $setupParams.SharedMemory = $true
             if ($cfg.sharedDir) { $setupParams.SharedDir = $cfg.sharedDir }
         }
+        if ($cfg.language)    { $setupParams.Language = $cfg.language }
         $payload = @{ Setup = $setup; Parameters = $setupParams } | ConvertTo-Json -Depth 8 -Compress
         $encodedPayload = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($payload))
         $command = @"
@@ -1651,7 +1713,8 @@ foreach (`$property in `$payload.Parameters.PSObject.Properties) { `$parameters[
         # ventana muestra el progreso de la copia y se cierra al terminar.
         $child = Start-Process 'powershell.exe' -ArgumentList @('-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', $encodedCommand) -WindowStyle Normal -Wait -PassThru
         if ($child.ExitCode -ne 0) {
-            Show-Error 'No se pudo actualizar Claude. Ejecuta Setup-ClaudeMulti.bat para revisar el error.'
+            Show-Error 'No se pudo actualizar Claude. Ejecuta Setup-ClaudeMulti.bat para revisar el error.' `
+                       'Could not update Claude. Run Setup-ClaudeMulti.bat to check the error.'
         }
         try {
             $cfg  = Get-Content -LiteralPath $cfgFile -Raw | ConvertFrom-Json
@@ -1662,7 +1725,8 @@ foreach (`$property in `$payload.Parameters.PSObject.Properties) { `$parameters[
 }
 
 if (-not $exe -or -not (Test-Path -LiteralPath $exe)) {
-    Show-Error "No se encontro el ejecutable de Claude:`n$exe`n`nEjecuta Setup-ClaudeMulti.bat para repararlo."
+    Show-Error "No se encontro el ejecutable de Claude:`n$exe`n`nEjecuta Setup-ClaudeMulti.bat para repararlo." `
+               "Could not find Claude executable:`n$exe`n`nRun Setup-ClaudeMulti.bat to repair it."
 }
 
 Start-Process -FilePath $exe -ArgumentList "--user-data-dir=`"$($prof.dataDir)`""
@@ -2471,6 +2535,7 @@ function Show-InteractiveMenu {
         Write-Host ("  " + (Get-I18nStr 'MenuOpt10'))
         Write-Host ("  " + (Get-I18nStr 'MenuOpt11')) -ForegroundColor Green
         Write-Host ("  " + (Get-I18nStr 'MenuOpt12'))
+        Write-Host ("  " + (Get-I18nStr 'MenuOptLanguage' @($(if ($script:Lang -eq 'es') { 'Espanol' } else { 'English' })))) -ForegroundColor Cyan
         Write-Host ("  " + (Get-I18nStr 'MenuOpt0'))
         Write-Host ''
         $opt = Read-Host (Get-I18nStr 'SelectOpt')
@@ -2573,6 +2638,19 @@ function Show-InteractiveMenu {
                 if ($ans -eq 'S' -or $ans -eq 's' -or $ans -eq 'Y' -or $ans -eq 'y') {
                     return @{ Profiles = $current; Revert = $true }
                 }
+            }
+            '13' {
+                Write-Host ''
+                Write-Host (Get-I18nStr 'AskLanguagePrompt') -ForegroundColor Cyan
+                $choice = Read-Host '[1] Espanol / [2] English'
+                if ($choice.Trim() -eq '1') {
+                    Set-AppLanguage 'es'
+                } elseif ($choice.Trim() -eq '2') {
+                    Set-AppLanguage 'en'
+                } else {
+                    if ($script:Lang -eq 'es') { Set-AppLanguage 'en' } else { Set-AppLanguage 'es' }
+                }
+                Write-Ok (Get-I18nStr 'GuiLangChanged' @($(if ($script:Lang -eq 'es') { 'Espanol' } else { 'English' })))
             }
             '0' {
                 Write-Host (Get-I18nStr 'OpCancelled')
@@ -2960,6 +3038,7 @@ function Invoke-MultiSetup {
         sharedMemory = [bool]$SharedMem
         sharedDir    = $TargetSharedDir
         profiles    = $cfgProfs
+        language    = $script:Lang
     })
 
     Write-Host ''
@@ -2995,11 +3074,34 @@ function Show-GuiWindow {
 
     $lblTitle = New-Object System.Windows.Forms.Label
     $lblTitle.Location = New-Object System.Drawing.Point(15, 12)
-    $lblTitle.Size = New-Object System.Drawing.Size(720, 28)
+    $lblTitle.Size = New-Object System.Drawing.Size(515, 28)
     $lblTitle.Text = (Get-I18nStr 'HeaderTitle')
     $lblTitle.Font = $fontTitle
     $lblTitle.ForeColor = [System.Drawing.Color]::Cyan
     [void]$form.Controls.Add($lblTitle)
+
+    $lblLang = New-Object System.Windows.Forms.Label
+    $lblLang.Location = New-Object System.Drawing.Point(535, 15)
+    $lblLang.Size = New-Object System.Drawing.Size(75, 20)
+    $lblLang.Text = (Get-I18nStr 'GuiLblLanguage')
+    $lblLang.Font = $fontNorm
+    $lblLang.ForeColor = [System.Drawing.Color]::LightGray
+    $lblLang.TextAlign = 'MiddleRight'
+    [void]$form.Controls.Add($lblLang)
+
+    $cmbLang = New-Object System.Windows.Forms.ComboBox
+    $cmbLang.Location = New-Object System.Drawing.Point(615, 12)
+    $cmbLang.Size = New-Object System.Drawing.Size(115, 25)
+    $cmbLang.DropDownStyle = 'DropDownList'
+    $cmbLang.Font = $fontNorm
+    $cmbLang.BackColor = [System.Drawing.Color]::FromArgb(45, 45, 48)
+    $cmbLang.ForeColor = [System.Drawing.Color]::White
+    $cmbLang.FlatStyle = 'Flat'
+    [void]$cmbLang.Items.Add('Espanol')
+    [void]$cmbLang.Items.Add('English')
+    if ($script:Lang -eq 'es') { $cmbLang.SelectedIndex = 0 }
+    else                       { $cmbLang.SelectedIndex = 1 }
+    [void]$form.Controls.Add($cmbLang)
 
     $lblSub = New-Object System.Windows.Forms.Label
     $lblSub.Location = New-Object System.Drawing.Point(15, 42)
@@ -3166,8 +3268,47 @@ function Show-GuiWindow {
 
     $script:GuiLogger = { param($msg) Append-GuiLog $msg }
 
+    $script:UpdatingLang = $false
+    function Update-GuiTexts {
+        $script:UpdatingLang = $true
+        try {
+            $form.Text        = (Get-I18nStr 'GuiTitle')
+            $lblTitle.Text    = (Get-I18nStr 'HeaderTitle')
+            $lblSub.Text      = (Get-I18nStr 'CurrentInstances') + ':'
+            $lblLang.Text     = (Get-I18nStr 'GuiLblLanguage')
+            $chkCopyMcp.Text  = (Get-I18nStr 'CopyMcpsLabel')
+            $chkShared.Text   = (Get-I18nStr 'SharedMemLabel')
+            $btnRun.Text      = (Get-I18nStr 'GuiBtnRun')
+            $btnAdd.Text      = (Get-I18nStr 'GuiBtnAdd')
+            $btnNote.Text     = (Get-I18nStr 'GuiBtnNote')
+            $btnHealth.Text   = (Get-I18nStr 'GuiBtnHealth')
+            $btnCache.Text    = (Get-I18nStr 'GuiBtnCache')
+            $btnBackup.Text   = (Get-I18nStr 'GuiBtnBackup')
+            $btnRestore.Text  = (Get-I18nStr 'GuiBtnRestore')
+            $btnRemove.Text   = (Get-I18nStr 'GuiBtnRemove')
+            $btnRevert.Text   = (Get-I18nStr 'GuiBtnRevert')
+            $btnLog.Text      = (Get-I18nStr 'GuiBtnLog')
+            if ($script:Lang -eq 'es') { $cmbLang.SelectedIndex = 0 }
+            else                       { $cmbLang.SelectedIndex = 1 }
+        }
+        finally {
+            $script:UpdatingLang = $false
+        }
+    }
+
+    $cmbLang.Add_SelectedIndexChanged({
+        if ($script:UpdatingLang) { return }
+        $targetLang = if ($cmbLang.SelectedIndex -eq 0) { 'es' } else { 'en' }
+        if ($script:Lang -ne $targetLang) {
+            Set-AppLanguage $targetLang
+            Update-GuiTexts
+            Refresh-ProfileList
+            Append-GuiLog (Get-I18nStr 'GuiLangChanged' @($(if ($script:Lang -eq 'es') { 'Espanol' } else { 'English' })))
+        }
+    })
+
     # Los botones que modifican estado se deshabilitan mientras trabaja el hijo.
-    $allButtons = @($btnRun, $btnAdd, $btnNote, $btnHealth, $btnCache, $btnBackup, $btnRestore, $btnRemove, $btnRevert)
+    $allButtons = @($btnRun, $btnAdd, $btnNote, $btnHealth, $btnCache, $btnBackup, $btnRestore, $btnRemove, $btnRevert, $cmbLang)
     function Set-GuiBusy {
         param([bool]$Busy)
         foreach ($b in $allButtons) { $b.Enabled = -not $Busy }
@@ -3186,7 +3327,7 @@ function Show-GuiWindow {
 
         if ($script:GuiSetupJob) { return }
         if (-not $setupPath -or -not (Test-Path -LiteralPath $setupPath)) {
-            Append-GuiLog '    [X]    No se pudo localizar Setup-ClaudeMulti.ps1.'
+            Append-GuiLog ('    [X]    ' + (Get-I18nStr 'ErrNoSetupScript'))
             return
         }
 
