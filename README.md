@@ -8,6 +8,10 @@ A PowerShell automation suite to run **multiple simultaneous, isolated instances
 
 Anthropic does not natively support account switching or concurrent accounts in Claude Desktop: you are forced to log out and authenticate again every time. This project removes that restriction seamlessly and securely.
 
+<p align="center">
+  <img src="screenshot.jpg" alt="Claude Desktop Multi-Instance GUI" width="700" />
+</p>
+
 ---
 
 ## Key Features

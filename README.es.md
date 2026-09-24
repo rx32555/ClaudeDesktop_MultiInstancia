@@ -8,6 +8,10 @@ Script de automatización en PowerShell para ejecutar **múltiples instancias si
 
 Anthropic no ofrece soporte nativo para el cambio o uso simultáneo de cuentas en Claude Desktop: obliga a cerrar sesión y autenticarse nuevamente cada vez. Este proyecto elimina esa restricción de forma transparente y segura.
 
+<p align="center">
+  <img src="screenshot.jpg" alt="Interfaz Gráfica de Claude Desktop Multi-Instancia" width="700" />
+</p>
+
 ---
 
 ## Características Principales
